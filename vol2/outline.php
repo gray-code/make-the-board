@@ -275,9 +275,7 @@ article.reply::before {
 </head>
 <body>
 <h1>ひと言掲示板</h1>
-<form method="post">
 <!-- ここにメッセージの入力フォームを設置 -->
-</form>
 <hr>
 <section>
 <!-- ここに投稿されたメッセージを表示 -->
