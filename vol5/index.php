@@ -47,6 +47,9 @@ if( $file_handle = fopen( FILENAME,'r') ) {
         );
 		array_unshift( $message_array, $message);
     }
+    
+    // ファイルを閉じる
+    fclose( $file_handle);
 }
 
 ?>
