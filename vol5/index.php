@@ -11,7 +11,6 @@ $now_date = null;
 $data = null;
 $file_handle = null;
 $split_data = null;
-$timestamp = null;
 $message = array();
 $message_array = array();
 
@@ -38,12 +37,11 @@ if( $file_handle = fopen( FILENAME,'r') ) {
     while( $data = fgets($file_handle) ){
 
         $split_data = preg_split( '/\'/', $data);
-		$timestamp = strtotime($split_data[5]);
 
         $message = array(
             'view_name' => $split_data[1],
             'message' => $split_data[3],
-            'date' => $timestamp
+            'post_date' => $split_data[5]
         );
 		array_unshift( $message_array, $message);
     }
