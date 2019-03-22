@@ -34,20 +34,20 @@ if( !empty($_POST['btn_submit']) ) {
 }
 
 if( $file_handle = fopen( FILENAME,'r') ) {
-    while( $data = fgets($file_handle) ){
-
-        $split_data = preg_split( '/\'/', $data);
-
-        $message = array(
-            'view_name' => $split_data[1],
-            'message' => $split_data[3],
-            'post_date' => $split_data[5]
-        );
+	while( $data = fgets($file_handle) ){
+	
+		$split_data = preg_split( '/\'/', $data);
+		
+		$message = array(
+			'view_name' => $split_data[1],
+			'message' => $split_data[3],
+			'post_date' => $split_data[5]
+		);
 		array_unshift( $message_array, $message);
-    }
-    
-    // ファイルを閉じる
-    fclose( $file_handle);
+	}
+	
+	// ファイルを閉じる
+	fclose( $file_handle);
 }
 
 ?>
