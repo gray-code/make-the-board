@@ -20,14 +20,14 @@ $error_message = array();
 if( !empty($_POST['btn_submit']) ) {
 
 	// 表示名の入力チェック
-    if( empty($_POST['view_name']) ) {
+	if( empty($_POST['view_name']) ) {
 		$error_message[] = '表示名を入力してください。';
-    }
-
+	}
+	
 	// メッセージの入力チェック
-    if( empty($_POST['message']) ) {
+	if( empty($_POST['message']) ) {
 		$error_message[] = 'ひと言メッセージを入力してください。';
-    }
+	}
 
 	if( empty($error_message) ) {
 
