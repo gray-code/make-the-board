@@ -188,7 +188,6 @@ hr {
     margin-bottom: 20px;
     padding: 10px;
     color: #48b400;
-    list-style-type: none;
     border-radius: 10px;
     border: 1px solid #4dc100;
 }
@@ -202,7 +201,7 @@ hr {
     border: 1px solid #ff5f79;
 }
 
-.success_message li,
+.success_message,
 .error_message li {
     font-size: 86%;
     line-height: 1.6em;
