@@ -355,7 +355,7 @@ article.reply::before {
         <h2><?php echo $value['view_name']; ?></h2>
         <time><?php echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
     </div>
-    <p><?php echo nl2br($value['message']); ?></p>
+    <p><?php echo $value['message']; ?></p>
 </article>
 <?php endforeach; ?>
 <?php endif; ?>
