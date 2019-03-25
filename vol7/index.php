@@ -13,7 +13,6 @@ $file_handle = null;
 $split_data = null;
 $message = array();
 $message_array = array();
-
 $success_message = null;
 $error_message = array();
 
