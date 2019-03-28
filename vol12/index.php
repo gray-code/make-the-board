@@ -108,7 +108,7 @@ if( $file_handle = fopen( FILENAME,'r') ) {
 */
 
 // データベースに接続
-$mysqli = new mysqli( 'maria', 'root', 'testtest', 'board');
+$mysqli = new mysqli( 'localhost', 'root', 'password', 'board');
 
 // 接続エラーの確認
 if( $mysqli->connect_errno ) {
