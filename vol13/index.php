@@ -1,9 +1,9 @@
 <?php
 
 // データベースの接続情報
-define( 'DB_HOST', 'maria');
+define( 'DB_HOST', 'localhost');
 define( 'DB_USER', 'root');
-define( 'DB_PASS', 'testtest');
+define( 'DB_PASS', 'password');
 define( 'DB_NAME', 'board');
 
 // タイムゾーン設定
