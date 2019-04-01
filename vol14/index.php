@@ -9,7 +9,33 @@ define( 'DB_NAME', 'board');
 // タイムゾーン設定
 date_default_timezone_set('Asia/Tokyo');
 
-w
+// 変数の初期化
+$now_date = null;
+$data = null;
+$file_handle = null;
+$split_data = null;
+$message = array();
+$message_array = array();
+$success_message = null;
+$error_message = array();
+$clean = array();
+
+session_start();
+
+if( !empty($_POST['btn_submit']) ) {
+	
+	// 表示名の入力チェック
+	if( empty($_POST['view_name']) ) {
+		$error_message[] = '表示名を入力してください。';
+	} else {
+		$clean['view_name'] = htmlspecialchars( $_POST['view_name'], ENT_QUOTES);
+
+		// セッションに表示名を保存
+		$_SESSION['view_name'] = $clean['view_name'];
+	}
+	
+	// メッセージの入力チェック
+	if( empty($_POST['message']) ) {
 		$error_message[] = 'ひと言メッセージを入力してください。';
 	} else {
 		$clean['message'] = htmlspecialchars( $_POST['message'], ENT_QUOTES);
