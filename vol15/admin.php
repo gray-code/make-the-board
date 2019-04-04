@@ -10,7 +10,6 @@ define( 'DB_NAME', 'board');
 date_default_timezone_set('Asia/Tokyo');
 
 // 変数の初期化
-// 変数の初期化
 $now_date = null;
 $data = null;
 $file_handle = null;
