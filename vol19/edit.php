@@ -366,7 +366,7 @@ article.reply::before {
 		<textarea id="message" name="message"><?php if( !empty($message_data['message']) ){ echo $message_data['message']; } ?></textarea>
 	</div>
 	<a class="btn_cancel" href="admin.php">キャンセル</a>
-	<input type="submit" name="btn_submit" value="書き込む">
+	<input type="submit" name="btn_submit" value="更新">
 	<input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
 </form>
 </body>
