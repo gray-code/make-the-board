@@ -42,7 +42,7 @@ if( $mysqli->connect_errno ) {
 	$error_message[] = 'データの読み込みに失敗しました。 エラー番号 '.$mysqli->connect_errno.' : '.$mysqli->connect_error;
 } else {
 
-	$sql = "SELECT view_name,message,post_date FROM message ORDER BY post_date DESC";
+	$sql = "SELECT id,view_name,message,post_date FROM message ORDER BY post_date DESC";
 	$res = $mysqli->query($sql);
 
     if( $res ) {
