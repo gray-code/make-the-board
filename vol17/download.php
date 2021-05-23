@@ -9,7 +9,8 @@ define( 'DB_NAME', 'board');
 // 変数の初期化
 $csv_data = null;
 $sql = null;
-$res = null;
+$pdo = null;
+$option = null;
 $message_array = array();
 
 session_start();
@@ -17,25 +18,31 @@ session_start();
 if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 
 	// 出力の設定
-	header("Content-Type: application/octet-stream");
+	header("Content-Type: text/csv");
 	header("Content-Disposition: attachment; filename=メッセージデータ.csv");
 	header("Content-Transfer-Encoding: binary");
 
 	// データベースに接続
-	$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
-	
-	// 接続エラーの確認
-	if( !$mysqli->connect_errno ) {
+	try {
 
-		$sql = "SELECT * FROM message ORDER BY post_date ASC";
-		$res = $mysqli->query($sql);
+		$option = array(
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+			PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+		);
+		$pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
 
-		if( $res ) {
-			$message_array = $res->fetch_all(MYSQLI_ASSOC);
-		}
+	} catch(PDOException $e) {
 
-		$mysqli->close();
+		// 接続エラーのときエラー内容を取得する
+		$error_message[] = $e->getMessage();
 	}
+
+	// メッセージのデータを取得する
+	$sql = "SELECT * FROM message ORDER BY post_date ASC";
+	$message_array = $pdo->query($sql);
+
+	// データベースの接続を閉じる
+	$pdo = null;
 
 	// CSVデータを作成
 	if( !empty($message_array) ) {
@@ -57,6 +64,7 @@ if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 
 	// ログインページへリダイレクト
 	header("Location: ./admin.php");
+	exit;
 }
 
 return;
