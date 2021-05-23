@@ -75,9 +75,9 @@ if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 		
 		// 1行目のラベル作成
 		$csv_data .= '"ID","表示名","メッセージ","投稿日時"'."\n";
-		
+
 		foreach( $message_array as $value ) {
-		
+
 			// データを1行ずつCSVファイルに書き込む
 			$csv_data .= '"' . $value['id'] . '","' . $value['view_name'] . '","' . $value['message'] . '","' . $value['post_date'] . "\"\n";
 		}
