@@ -10,39 +10,48 @@ define( 'DB_NAME', 'board');
 date_default_timezone_set('Asia/Tokyo');
 
 // 変数の初期化
-$now_date = null;
-$data = null;
-$file_handle = null;
-$split_data = null;
+$current_date = null;
 $message = array();
 $message_array = array();
 $success_message = null;
 $error_message = array();
-$clean = array();
+$pdo = null;
+$stmt = null;
+$res = null;
+$option = null;
 
 session_start();
 
+// データベースに接続
+try {
+
+    $option = array(
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+    );
+    $pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
+
+} catch(PDOException $e) {
+
+    // 接続エラーのときエラー内容を取得する
+    $error_message[] = $e->getMessage();
+}
+
 if( !empty($_POST['btn_submit']) ) {
 
+
+
 }
 
-// データベースに接続
-$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
+if( !empty($pdo) ) {
 
-// 接続エラーの確認
-if( $mysqli->connect_errno ) {
-	$error_message[] = 'データの読み込みに失敗しました。 エラー番号 '.$mysqli->connect_errno.' : '.$mysqli->connect_error;
-} else {
-
-	$sql = "SELECT view_name,message,post_date FROM message ORDER BY post_date DESC";
-	$res = $mysqli->query($sql);
-
-    if( $res ) {
-		$message_array = $res->fetch_all(MYSQLI_ASSOC);
-    }
-
-    $mysqli->close();
+    // メッセージのデータを取得する
+    $sql = "SELECT view_name,message,post_date FROM message ORDER BY post_date DESC";
+    $message_array = $pdo->query($sql);
 }
+
+// データベースの接続を閉じる
+$pdo = null;
 
 ?>
 <!DOCTYPE html>
@@ -344,7 +353,7 @@ article.reply::before {
         <h2><?php echo $value['view_name']; ?></h2>
         <time><?php echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
     </div>
-    <p><?php echo $value['message']; ?></p>
+    <p><?php echo nl2br($value['message']); ?></p>
 </article>
 <?php } ?>
 <?php } ?>
