@@ -28,7 +28,7 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
     );
-    $pdo = new PDO('mysql:charset=UTF8;dbname=board;host=localhost', 'root', 'dogman0807', $option);
+    $pdo = new PDO('mysql:charset=UTF8;dbname=board;host=localhost', 'root', 'password', $option);
 
 } catch(PDOException $e) {
 
