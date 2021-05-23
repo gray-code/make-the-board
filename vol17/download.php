@@ -17,11 +17,6 @@ session_start();
 
 if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 
-	// 出力の設定
-	header("Content-Type: text/csv");
-	header("Content-Disposition: attachment; filename=メッセージデータ.csv");
-	header("Content-Transfer-Encoding: binary");
-
 	// データベースに接続
 	try {
 
@@ -31,18 +26,24 @@ if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 		);
 		$pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
 
+		// メッセージのデータを取得する
+		$sql = "SELECT * FROM message ORDER BY post_date ASC";
+		$message_array = $pdo->query($sql);
+
+		// データベースの接続を閉じる
+		$pdo = null;
+
 	} catch(PDOException $e) {
 
-		// 接続エラーのときエラー内容を取得する
-		$error_message[] = $e->getMessage();
+		// 管理者ページへリダイレクト
+		header("Location: ./admin.php");
+		exit;
 	}
 
-	// メッセージのデータを取得する
-	$sql = "SELECT * FROM message ORDER BY post_date ASC";
-	$message_array = $pdo->query($sql);
-
-	// データベースの接続を閉じる
-	$pdo = null;
+	// 出力の設定
+	header("Content-Type: text/csv");
+	header("Content-Disposition: attachment; filename=メッセージデータ.csv");
+	header("Content-Transfer-Encoding: binary");
 
 	// CSVデータを作成
 	if( !empty($message_array) ) {
