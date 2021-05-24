@@ -10,86 +10,119 @@ define( 'DB_NAME', 'board');
 date_default_timezone_set('Asia/Tokyo');
 
 // 変数の初期化
-$message_id = null;
-$mysqli = null;
-$sql = null;
-$res = null;
+$view_name = null;
+$message = array();
+$message_data = null;
 $error_message = array();
-$message_data = array();
+$pdo = null;
+$stmt = null;
+$res = null;
+$option = null;
 
 session_start();
 
 // 管理者としてログインしているか確認
 if( empty($_SESSION['admin_login']) || $_SESSION['admin_login'] !== true ) {
-	
+
 	// ログインページへリダイレクト
 	header("Location: ./admin.php");
+	exit;
+}
+
+// データベースに接続
+try {
+
+    $option = array(
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+    );
+    $pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
+
+} catch(PDOException $e) {
+
+    // 接続エラーのときエラー内容を取得する
+    $error_message[] = $e->getMessage();
 }
 
 if( !empty($_GET['message_id']) && empty($_POST['message_id']) ) {
 
-	$message_id = (int)htmlspecialchars($_GET['message_id'], ENT_QUOTES);
+	// SQL作成
+	$stmt = $pdo->prepare("SELECT * FROM message WHERE id = :id");
 
-	// データベースに接続
-	$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
-	
-	// 接続エラーの確認
-	if( $mysqli->connect_errno ) {
-		$error_message[] = 'データベースの接続に失敗しました。 エラー番号 '.$mysqli->connect_errno.' : '.$mysqli->connect_error;
-	} else {
-	
-		// データの読み込み
-		$sql = "SELECT * FROM message WHERE id = $message_id";
-		$res = $mysqli->query($sql);
-		
-		if( $res ) {
-			$message_data = $res->fetch_assoc();
-		} else {
-		
-			// データが読み込めなかったら一覧に戻る
-			header("Location: ./admin.php");
-		}
-		
-		$mysqli->close();
+	// 値をセット
+	$stmt->bindValue( ':id', $_GET['message_id'], PDO::PARAM_INT);
+
+	// SQLクエリの実行
+	$stmt->execute();
+
+	// 表示するデータを取得
+	$message_data = $stmt->fetch();
+
+	// プリペアドステートメントを削除
+	$stmt = null;
+
+	// 投稿データが取得できないときは管理ページに戻る
+	if( empty($message_data) ) {
+		header("Location: ./admin.php");
+		exit;
 	}
 
 } elseif( !empty($_POST['message_id']) ) {
 
-	$message_id = (int)htmlspecialchars( $_POST['message_id'], ENT_QUOTES);
-	
-	if( empty($_POST['view_name']) ) {
+	// 空白除去
+	$view_name = preg_replace( '/\A[\p{C}\p{Z}]++|[\p{C}\p{Z}]++\z/u', '', $_POST['view_name']);
+	$message = preg_replace( '/\A[\p{C}\p{Z}]++|[\p{C}\p{Z}]++\z/u', '', $_POST['message']);
+
+	// 表示名の入力チェック
+	if( empty($view_name) ) {
 		$error_message[] = '表示名を入力してください。';
-	} else {
-		$message_data['view_name'] = htmlspecialchars($_POST['view_name'], ENT_QUOTES);
 	}
-	
-	if( empty($_POST['message']) ) {
+
+	// メッセージの入力チェック
+	if( empty($message) ) {
 		$error_message[] = 'メッセージを入力してください。';
-	} else {
-		$message_data['message'] = htmlspecialchars($_POST['message'], ENT_QUOTES);
 	}
 
 	if( empty($error_message) ) {
-	
-		// データベースに接続
-		$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
-		
-		// 接続エラーの確認
-		if( $mysqli->connect_errno ) {
-			$error_message[] = 'データベースの接続に失敗しました。 エラー番号 ' . $mysqli->connect_errno . ' : ' . $mysqli->connect_error;
-		} else {
-			$sql = "UPDATE message SET view_name = '$message_data[view_name]', message= '$message_data[message]' WHERE id =  $message_id";
-			$res = $mysqli->query($sql);
+
+		// トランザクション開始
+		$pdo->beginTransaction();
+
+		try {
+
+			// SQL作成
+			$stmt = $pdo->prepare("UPDATE message SET view_name = :view_name, message= :message WHERE id = :id");
+
+			// 値をセット
+			$stmt->bindParam( ':view_name', $view_name, PDO::PARAM_STR);
+			$stmt->bindParam( ':message', $message, PDO::PARAM_STR);
+			$stmt->bindValue( ':id', $_POST['message_id'], PDO::PARAM_INT);
+
+			// SQLクエリの実行
+			$stmt->execute();
+
+			// コミット
+			$res = $pdo->commit();
+
+		} catch(Exception $e) {
+
+			// エラーが発生した時はロールバック
+			$pdo->rollBack();
 		}
-		
-		$mysqli->close();
-		
+
+		// プリペアドステートメントを削除
+		$stmt = null;
+
 		// 更新に成功したら一覧に戻る
 		if( $res ) {
 			header("Location: ./admin.php");
+			exit;
 		}
 	}
 }
+
+// データベースの接続を閉じる
+$pdo = null;
 
 ?>
 <!DOCTYPE html>
@@ -165,37 +198,37 @@ ins {
 
 /* change colours to suit your needs */
 mark {
-	background-color:#ff9;
-	color:#000;
-	font-style:italic;
-	font-weight:bold;
+    background-color:#ff9;
+    color:#000;
+    font-style:italic;
+    font-weight:bold;
 }
 
 del {
-	text-decoration: line-through;
+    text-decoration: line-through;
 }
 
 abbr[title], dfn[title] {
-	border-bottom:1px dotted;
-	cursor:help;
+    border-bottom:1px dotted;
+    cursor:help;
 }
 
 table {
-	border-collapse:collapse;
-	border-spacing:0;
+    border-collapse:collapse;
+    border-spacing:0;
 }
 
 hr {
-	display:block;
-	height:1px;
-	border:0;
-	border-top:1px solid #cccccc;
-	margin:1em 0;
-	padding:0;
+    display:block;
+    height:1px;
+    border:0;
+    border-top:1px solid #cccccc;
+    margin:1em 0;
+    padding:0;
 }
 
 input, select {
-	vertical-align:middle;
+    vertical-align:middle;
 }
 
 /*------------------------------
@@ -212,27 +245,27 @@ body {
 }
 
 a {
-	color: #007edf;
-	text-decoration: none;
+    color: #007edf;
+    text-decoration: none;
 }
 
 a:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .wrapper {
-	display: flex;
-	margin: 0 auto 50px;
-	padding: 0 20px;
-	max-width: 1200px;
-	align-items: flex-start;
+    display: flex;
+    margin: 0 auto 50px;
+    padding: 0 20px;
+    max-width: 1200px;
+    align-items: flex-start;
 }
 
 h1 {
 	margin-bottom: 30px;
-	font-size: 100%;
-	color: #222;
-	text-align: center;
+    font-size: 100%;
+    color: #222;
+    text-align: center;
 }
 
 
@@ -241,9 +274,9 @@ h1 {
 -----------------------------------*/
 
 label {
-	display: block;
-	margin-bottom: 7px;
-	font-size: 86%;
+    display: block;
+    margin-bottom: 7px;
+    font-size: 86%;
 }
 
 input[type="text"],
@@ -251,9 +284,9 @@ textarea {
 	margin-bottom: 20px;
 	padding: 10px;
 	font-size: 86%;
-	border: 1px solid #ddd;
-	border-radius: 3px;
-	background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: #fff;
 }
 
 input[type="text"] {
@@ -266,19 +299,19 @@ textarea {
 }
 input[type="submit"] {
 	appearance: none;
-	-webkit-appearance: none;
-	padding: 10px 20px;
-	color: #fff;
-	font-size: 86%;
-	line-height: 1.0em;
-	cursor: pointer;
-	border: none;
-	border-radius: 5px;
-	background-color: #37a1e5;
+    -webkit-appearance: none;
+    padding: 10px 20px;
+    color: #fff;
+    font-size: 86%;
+    line-height: 1.0em;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #37a1e5;
 }
 input[type=submit]:hover,
 button:hover {
-	background-color: #2392d8;
+    background-color: #2392d8;
 }
 
 hr {
@@ -287,26 +320,26 @@ hr {
 }
 
 .success_message {
-	margin-bottom: 20px;
-	padding: 10px;
-	color: #48b400;
-	border-radius: 10px;
-	border: 1px solid #4dc100;
+    margin-bottom: 20px;
+    padding: 10px;
+    color: #48b400;
+    border-radius: 10px;
+    border: 1px solid #4dc100;
 }
 
 .error_message {
-	margin-bottom: 20px;
-	padding: 10px;
-	color: #ef072d;
-	list-style-type: none;
-	border-radius: 10px;
-	border: 1px solid #ff5f79;
+    margin-bottom: 20px;
+    padding: 10px;
+    color: #ef072d;
+    list-style-type: none;
+    border-radius: 10px;
+    border: 1px solid #ff5f79;
 }
 
 .success_message,
 .error_message li {
-	font-size: 86%;
-	line-height: 1.6em;
+    font-size: 86%;
+    line-height: 1.6em;
 }
 
 .btn_cancel {
@@ -336,20 +369,20 @@ article {
 	background: #fff;
 }
 article.reply {
-	position: relative;
-	margin-top: 15px;
-	margin-left: 30px;
+    position: relative;
+    margin-top: 15px;
+    margin-left: 30px;
 }
 article.reply::before {
-	position: absolute;
-	top: -10px;
-	left: 20px;
-	display: block;
-	content: "";
-	border-top: none;
-	border-left: 7px solid #f7f7f7;
-	border-right: 7px solid #f7f7f7;
-	border-bottom: 10px solid #fff;
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    display: block;
+    content: "";
+    border-top: none;
+    border-left: 7px solid #f7f7f7;
+    border-right: 7px solid #f7f7f7;
+    border-bottom: 10px solid #fff;
 }
 	.info {
 		margin-bottom: 10px;
@@ -374,29 +407,29 @@ article.reply::before {
 
 @media only screen and (max-width: 1000px) {
 
-	body {
-		padding: 30px 5%;
-	}
-	
-	input[type="text"] {
-		width: 100%;
-	}
-	textarea {
-		width: 100%;
-		max-width: 100%;
-		height: 70px;
-	}
+    body {
+        padding: 30px 5%;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        height: 70px;
+    }
 }
 </style>
 </head>
 <body>
 <h1>ひと言掲示板 管理ページ（投稿の編集）</h1>
 <?php if( !empty($error_message) ): ?>
-	<ul class="error_message">
+    <ul class="error_message">
 		<?php foreach( $error_message as $value ): ?>
-			<li>・<?php echo $value; ?></li>
+            <li>・<?php echo $value; ?></li>
 		<?php endforeach; ?>
-	</ul>
+    </ul>
 <?php endif; ?>
 <form method="post">
 	<div>
@@ -408,7 +441,7 @@ article.reply::before {
 		<textarea id="message" name="message"><?php if( !empty($message_data['message']) ){ echo $message_data['message']; } ?></textarea>
 	</div>
 	<a class="btn_cancel" href="admin.php">キャンセル</a>
-	<input type="submit" name="btn_submit" value="書き込む">
+	<input type="submit" name="btn_submit" value="更新">
 	<input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
 </form>
 </body>
