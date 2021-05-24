@@ -3,7 +3,7 @@
 // データベースの接続情報
 define( 'DB_HOST', 'localhost');
 define( 'DB_USER', 'root');
-define( 'DB_PASS', 'password');
+define( 'DB_PASS', 'dogman0807');
 define( 'DB_NAME', 'board');
 
 // タイムゾーン設定
