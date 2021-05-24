@@ -10,72 +10,95 @@ define( 'DB_NAME', 'board');
 date_default_timezone_set('Asia/Tokyo');
 
 // 変数の初期化
-$message_id = null;
-$mysqli = null;
-$sql = null;
-$res = null;
+$view_name = null;
+$message = array();
+$message_data = null;
 $error_message = array();
-$message_data = array();
+$pdo = null;
+$stmt = null;
+$res = null;
+$option = null;
 
 session_start();
 
-
+// 管理者としてログインしているか確認
 if( empty($_SESSION['admin_login']) || $_SESSION['admin_login'] !== true ) {
 
-    // ログインページへリダイレクト
+	// ログインページへリダイレクト
 	header("Location: ./admin.php");
+	exit;
 }
 
+// データベースに接続
+try {
+
+    $option = array(
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+    );
+    $pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
+
+} catch(PDOException $e) {
+
+    // 接続エラーのときエラー内容を取得する
+    $error_message[] = $e->getMessage();
+}
 
 if( !empty($_GET['message_id']) && empty($_POST['message_id']) ) {
 
-	$message_id = (int)htmlspecialchars($_GET['message_id'], ENT_QUOTES);
+	// SQL作成
+	$stmt = $pdo->prepare("SELECT * FROM message WHERE id = :id");
 
-	// データベースに接続
-	$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
-	
-	// 接続エラーの確認
-	if( $mysqli->connect_errno ) {
-		$error_message[] = 'データベースの接続に失敗しました。 エラー番号 '.$mysqli->connect_errno.' : '.$mysqli->connect_error;
-	} else {
-	
-		// データの読み込み
-		$sql = "SELECT * FROM message WHERE id = $message_id";
-		$res = $mysqli->query($sql);
-		
-		if( $res ) {
-			$message_data = $res->fetch_assoc();
-		} else {
-		
-			// データが読み込めなかったら一覧に戻る
-			header("Location: ./admin.php");
-		}
-		
-		$mysqli->close();
+	// 値をセット
+	$stmt->bindValue( ':id', $_GET['message_id'], PDO::PARAM_INT);
+
+	// SQLクエリの実行
+	$stmt->execute();
+
+	// 表示するデータを取得
+	$message_data = $stmt->fetch();
+
+	// 投稿データが取得できないときは管理ページに戻る
+	if( empty($message_data) ) {
+		header("Location: ./admin.php");
+		exit;
 	}
 
 } elseif( !empty($_POST['message_id']) ) {
 
-	$message_id = (int)htmlspecialchars( $_POST['message_id'], ENT_QUOTES);
+    // トランザクション開始
+    $pdo->beginTransaction();
 
-	// データベースに接続
-	$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
-	
-	// 接続エラーの確認
-	if( $mysqli->connect_errno ) {
-		$error_message[] = 'データベースの接続に失敗しました。 エラー番号 ' . $mysqli->connect_errno . ' : ' . $mysqli->connect_error;
-	} else {
-		$sql = "DELETE FROM message WHERE id = $message_id";
-		$res = $mysqli->query($sql);
-	}
-	
-	$mysqli->close();
-	
-	// 更新に成功したら一覧に戻る
-	if( $res ) {
-		header("Location: ./admin.php");
-	}
+    try {
+
+        // SQL作成
+        $stmt = $pdo->prepare("DELETE FROM message WHERE id = :id");
+
+        // 値をセット
+        $stmt->bindValue( ':id', $_POST['message_id'], PDO::PARAM_INT);
+
+        // SQLクエリの実行
+        $stmt->execute();
+
+        // コミット
+        $res = $pdo->commit();
+
+    } catch(Exception $e) {
+
+        // エラーが発生した時はロールバック
+        $pdo->rollBack();
+    }
+
+    // 削除に成功したら一覧に戻る
+    if( $res ) {
+        header("Location: ./admin.php");
+        exit;
+    }
 }
+
+// データベースの接続を閉じる
+$stmt = null;
+$pdo = null;
 
 ?>
 <!DOCTYPE html>
@@ -392,17 +415,17 @@ article.reply::before {
 <?php endif; ?>
 <p class="text-confirm">以下の投稿を削除します。<br>よろしければ「削除」ボタンを押してください。</p>
 <form method="post">
-    <div>
-        <label for="view_name">表示名</label>
-        <input id="view_name" type="text" name="view_name" value="<?php if( !empty($message_data['view_name']) ){ echo $message_data['view_name']; } ?>" disabled>
-    </div>
-    <div>
-        <label for="message">ひと言メッセージ</label>
-        <textarea id="message" name="message" disabled><?php if( !empty($message_data['message']) ){ echo $message_data['message']; } ?></textarea>
-    </div>
-    <a class="btn_cancel" href="admin.php">キャンセル</a>
-    <input type="submit" name="btn_submit" value="削除">
-    <input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
+	<div>
+		<label for="view_name">表示名</label>
+		<input id="view_name" type="text" name="view_name" value="<?php if( !empty($message_data['view_name']) ){ echo $message_data['view_name']; } ?>" disabled>
+	</div>
+	<div>
+		<label for="message">ひと言メッセージ</label>
+		<textarea id="message" name="message" disabled><?php if( !empty($message_data['message']) ){ echo $message_data['message']; } ?></textarea>
+	</div>
+	<a class="btn_cancel" href="admin.php">キャンセル</a>
+	<input type="submit" name="btn_submit" value="削除">
+	<input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
 </form>
 </body>
 </html>
