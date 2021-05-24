@@ -3,7 +3,7 @@
 // データベースの接続情報
 define( 'DB_HOST', 'localhost');
 define( 'DB_USER', 'root');
-define( 'DB_PASS', 'password');
+define( 'DB_PASS', 'dogman0807');
 define( 'DB_NAME', 'board');
 
 // タイムゾーン設定
@@ -425,7 +425,7 @@ article.reply::before {
 	</div>
 	<a class="btn_cancel" href="admin.php">キャンセル</a>
 	<input type="submit" name="btn_submit" value="削除">
-	<input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
+	<input type="hidden" name="message_id" value="<?php if( !empty($message_data['id']) ){ echo $message_data['id']; } elseif( !empty($_POST['message_id']) ){ echo htmlspecialchars( $_POST['message_id'], ENT_QUOTES, 'UTF-8'); } ?>">
 </form>
 </body>
 </html>
