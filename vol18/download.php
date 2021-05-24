@@ -56,6 +56,7 @@ if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ) {
 		$message_array = $stmt->fetchAll();
 
 		// データベースの接続を閉じる
+		$stmt = null;
 		$pdo = null;
 
 	} catch(PDOException $e) {
