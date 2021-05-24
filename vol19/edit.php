@@ -59,9 +59,6 @@ if( !empty($_GET['message_id']) ) {
 	// 表示するデータを取得
 	$message_data = $stmt->fetch();
 
-	// プリペアドステートメントを削除
-	$stmt = null;
-
 	// 投稿データが取得できないときは管理ページに戻る
 	if( empty($message_data) ) {
 		header("Location: ./admin.php");
@@ -70,6 +67,7 @@ if( !empty($_GET['message_id']) ) {
 }
 
 // データベースの接続を閉じる
+$stmt = null;
 $pdo = null;
 
 ?>
