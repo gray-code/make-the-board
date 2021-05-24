@@ -388,7 +388,7 @@ article.reply::before {
 	</div>
 	<a class="btn_cancel" href="admin.php">キャンセル</a>
 	<input type="submit" name="btn_submit" value="更新">
-	<input type="hidden" name="message_id" value="<?php echo $message_data['id']; ?>">
+	<input type="hidden" name="message_id" value="<?php if( !empty($message_data['id']) ){ echo $message_data['id']; } ?>">
 </form>
 </body>
 </html>
