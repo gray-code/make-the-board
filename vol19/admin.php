@@ -13,17 +13,32 @@ define( 'DB_NAME', 'board');
 date_default_timezone_set('Asia/Tokyo');
 
 // 変数の初期化
-$now_date = null;
-$data = null;
-$file_handle = null;
-$split_data = null;
+$current_date = null;
 $message = array();
 $message_array = array();
 $success_message = null;
 $error_message = array();
-$clean = array();
+$pdo = null;
+$stmt = null;
+$res = null;
+$option = null;
 
 session_start();
+
+// データベースに接続
+try {
+
+    $option = array(
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => false
+    );
+    $pdo = new PDO('mysql:charset=UTF8;dbname='.DB_NAME.';host='.DB_HOST , DB_USER, DB_PASS, $option);
+
+} catch(PDOException $e) {
+
+    // 接続エラーのときエラー内容を取得する
+    $error_message[] = $e->getMessage();
+}
 
 if( !empty($_POST['btn_submit']) ) {
 
@@ -34,23 +49,15 @@ if( !empty($_POST['btn_submit']) ) {
 	}
 }
 
-// データベースに接続
-$mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME);
+if( !empty($pdo) ) {
 
-// 接続エラーの確認
-if( $mysqli->connect_errno ) {
-	$error_message[] = 'データの読み込みに失敗しました。 エラー番号 '.$mysqli->connect_errno.' : '.$mysqli->connect_error;
-} else {
-
-	$sql = "SELECT id,view_name,message,post_date FROM message ORDER BY post_date DESC";
-	$res = $mysqli->query($sql);
-
-    if( $res ) {
-		$message_array = $res->fetch_all(MYSQLI_ASSOC);
-    }
-
-    $mysqli->close();
+    // メッセージのデータを取得する
+    $sql = "SELECT * FROM message ORDER BY post_date DESC";
+    $message_array = $pdo->query($sql);
 }
+
+// データベースの接続を閉じる
+$pdo = null;
 
 ?>
 <!DOCTYPE html>
@@ -250,26 +257,26 @@ hr {
 }
 
 .success_message {
-	margin-bottom: 20px;
-	padding: 10px;
-	color: #48b400;
-	border-radius: 10px;
-	border: 1px solid #4dc100;
+    margin-bottom: 20px;
+    padding: 10px;
+    color: #48b400;
+    border-radius: 10px;
+    border: 1px solid #4dc100;
 }
 
 .error_message {
-	margin-bottom: 20px;
-	padding: 10px;
-	color: #ef072d;
-	list-style-type: none;
-	border-radius: 10px;
-	border: 1px solid #ff5f79;
+    margin-bottom: 20px;
+    padding: 10px;
+    color: #ef072d;
+    list-style-type: none;
+    border-radius: 10px;
+    border: 1px solid #ff5f79;
 }
 
 .success_message,
 .error_message li {
-	font-size: 86%;
-	line-height: 1.6em;
+    font-size: 86%;
+    line-height: 1.6em;
 }
 
 
@@ -284,20 +291,20 @@ article {
 	background: #fff;
 }
 article.reply {
-	position: relative;
-	margin-top: 15px;
-	margin-left: 30px;
+    position: relative;
+    margin-top: 15px;
+    margin-left: 30px;
 }
 article.reply::before {
-	position: absolute;
-	top: -10px;
-	left: 20px;
-	display: block;
-	content: "";
-	border-top: none;
-	border-left: 7px solid #f7f7f7;
-	border-right: 7px solid #f7f7f7;
-	border-bottom: 10px solid #fff;
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    display: block;
+    content: "";
+    border-top: none;
+    border-left: 7px solid #f7f7f7;
+    border-right: 7px solid #f7f7f7;
+    border-bottom: 10px solid #fff;
 }
 	.info {
 		margin-bottom: 10px;
@@ -320,58 +327,59 @@ article.reply::before {
 		font-size: 86%;
 	}
 	article p {
-		color: #555;
-		font-size: 86%;
-		line-height: 1.6em;
+			color: #555;
+			font-size: 86%;
+			line-height: 1.6em;
 	}
 
 @media only screen and (max-width: 1000px) {
 
-	body {
-		padding: 30px 5%;
-	}
-	
-	input[type="text"] {
-		width: 100%;
-	}
-	textarea {
-		width: 100%;
-		max-width: 100%;
-		height: 70px;
-	}
+    body {
+        padding: 30px 5%;
+    }
+
+    input[type="text"] {
+        width: 100%;
+    }
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        height: 70px;
+    }
 }
 </style>
 </head>
 <body>
 <h1>ひと言掲示板 管理ページ</h1>
 <?php if( !empty($error_message) ): ?>
-	<ul class="error_message">
+    <ul class="error_message">
 		<?php foreach( $error_message as $value ): ?>
-			<li>・<?php echo $value; ?></li>
+            <li>・<?php echo $value; ?></li>
 		<?php endforeach; ?>
-	</ul>
+    </ul>
 <?php endif; ?>
 <section>
+
 <?php if( !empty($_SESSION['admin_login']) && $_SESSION['admin_login'] === true ): ?>
 
 <form method="get" action="./download.php">
-	<select name="limit">
-		<option value="">全て</option>
-		<option value="10">10件</option>
-		<option value="30">30件</option>
-	</select>
-	<input type="submit" name="btn_download" value="ダウンロード">
+    <select name="limit">
+        <option value="">全て</option>
+        <option value="10">10件</option>
+        <option value="30">30件</option>
+    </select>
+    <input type="submit" name="btn_download" value="ダウンロード">
 </form>
 
 <?php if( !empty($message_array) ){ ?>
 <?php foreach( $message_array as $value ){ ?>
 <article>
-	<div class="info">
-		<h2><?php echo $value['view_name']; ?></h2>
-		<time><?php echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
-		<p><a href="edit.php?message_id=<?php echo $value['id']; ?>">編集</a>&nbsp;&nbsp;<a href="delete.php?message_id=<?php echo $value['id']; ?>">削除</a></p>
-	</div>
-	<p><?php echo $value['message']; ?></p>
+    <div class="info">
+        <h2><?php echo $value['view_name']; ?></h2>
+        <time><?php echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
+				<p><a href="edit.php?message_id=<?php echo $value['id']; ?>">編集</a>  <a href="delete.php?message_id=<?php echo $value['id']; ?>">削除</a></p>
+    </div>
+    <p><?php echo nl2br($value['message']); ?></p>
 </article>
 <?php } ?>
 <?php } ?>
@@ -379,11 +387,11 @@ article.reply::before {
 <?php else: ?>
 
 <form method="post">
-	<div>
-		<label for="admin_password">ログインパスワード</label>
-		<input id="admin_password" type="password" name="admin_password" value="">
-	</div>
-	<input type="submit" name="btn_submit" value="ログイン">
+    <div>
+        <label for="admin_password">ログインパスワード</label>
+        <input id="admin_password" type="password" name="admin_password" value="">
+    </div>
+    <input type="submit" name="btn_submit" value="ログイン">
 </form>
 <?php endif; ?>
 </section>
