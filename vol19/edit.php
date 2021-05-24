@@ -47,8 +47,6 @@ try {
 
 if( !empty($_GET['message_id']) ) {
 
-	$message_id = (int)$_GET['message_id'];
-
 	// SQL作成
 	$stmt = $pdo->prepare("SELECT * FROM message WHERE id = :id");
 
