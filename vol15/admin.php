@@ -350,10 +350,10 @@ article.reply::before {
 <?php foreach( $message_array as $value ){ ?>
 <article>
     <div class="info">
-        <h2><?php echo $value['view_name']; ?></h2>
+        <h2><?php echo htmlspecialchars( $value['view_name'], ENT_QUOTES, 'UTF-8'); ?></h2>
         <time><?php echo date('Y年m月d日 H:i', strtotime($value['post_date'])); ?></time>
     </div>
-    <p><?php echo nl2br($value['message']); ?></p>
+    <p><?php echo nl2br( htmlspecialchars( $value['message'], ENT_QUOTES, 'UTF-8') ); ?></p>
 </article>
 <?php } ?>
 <?php } ?>
