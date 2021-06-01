@@ -11,10 +11,10 @@ if( !empty($_POST['btn_submit']) ) {
 	if( $file_handle = fopen( FILENAME, "a") ) {
 
 	    // 書き込み日時を取得
-		$now_date = date("Y-m-d H:i:s");
+		$current_date = date("Y-m-d H:i:s");
 	
 		// 書き込むデータを作成
-		$data = "'".$_POST['view_name']."','".$_POST['message']."','".$now_date."'\n";
+		$data = "'".$_POST['view_name']."','".$_POST['message']."','".$current_date."'\n";
 	
 		// 書き込み
 		fwrite( $file_handle, $data);
